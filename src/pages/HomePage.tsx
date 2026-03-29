@@ -7,7 +7,6 @@ import NewsTicker from "@/components/NewsTicker";
 import { newsArticles } from "@/data/newsData";
 import { User, TrendingUp, Rocket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-// ✅ GLOBAL LANGUAGE
 import { useLanguage } from "@/components/Language";
 import { translateText } from "@/hooks/translate";
 
@@ -17,52 +16,30 @@ const userTypes = [
   { id: "founder", label: "Founder", icon: Rocket, desc: "Funding news & competitor intelligence" },
 ];
 
-const categories = ["All", "Finance", "Startup", "Tech", "Policy"];
-
-const roleStyles = {
-  student: "border-blue-400/20",
-  investor: "border-green-400/20",
-  founder: "border-purple-400/20",
-};
-
 const HomePage = () => {
   const [selectedType, setSelectedType] = useState("investor");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [displayNews, setDisplayNews] = useState<any[]>([]);
-  const [topCategory, setTopCategory] = useState<string | null>(null);
-
-  // ✅ GLOBAL LANGUAGE
   const { lang } = useLanguage();
-
   const navigate = useNavigate();
-  const isLoggedIn = true;
 
-  useEffect(() => {
-    const saved = localStorage.getItem("userType");
-    if (saved) setSelectedType(saved);
-  }, []);
-
-  // 🔥 MAIN LOGIC + TRANSLATION
+  // ✅ ALWAYS SHOW DATA (NO LOGIN DEPENDENCY)
   useEffect(() => {
     const run = async () => {
-      let baseData: any[] = [];
+      let baseData = newsArticles;
 
-      if (isLoggedIn) {
-        baseData = getRecommendedNews();
-      } else {
-        baseData =
-          selectedCategory === "All"
-            ? newsArticles
-            : newsArticles.filter((a) => a.category === selectedCategory);
+      // ✅ SAFETY FALLBACK
+      if (!baseData || baseData.length === 0) {
+        setDisplayNews([]);
+        return;
       }
 
-      // ✅ IF ENGLISH → NO TRANSLATION
+      // ✅ NO TRANSLATION
       if (lang === "en") {
         setDisplayNews(baseData);
         return;
       }
 
-      // 🔥 TRANSLATE EVERYTHING
+      // 🔥 TRANSLATE
       const translated = await Promise.all(
         baseData.map(async (a) => ({
           ...a,
@@ -75,56 +52,14 @@ const HomePage = () => {
     };
 
     run();
-  }, [selectedCategory, selectedType, isLoggedIn, lang]);
+  }, [lang]);
 
   const handleRoleChange = (role: string) => {
     setSelectedType(role);
     localStorage.setItem("userType", role);
   };
 
-  const trackUserActivity = (article: any) => {
-    const history = JSON.parse(localStorage.getItem("history") || "[]");
-
-    history.push({
-      category: article.category,
-      title: article.title,
-    });
-
-    localStorage.setItem("history", JSON.stringify(history));
-  };
-
-  const getRecommendedNews = () => {
-    const history = JSON.parse(localStorage.getItem("history") || "[]");
-
-    if (history.length === 0) {
-      setTopCategory(null);
-
-      if (selectedType === "investor") {
-        return newsArticles.filter((a) => a.category === "Finance");
-      }
-      if (selectedType === "founder") {
-        return newsArticles.filter((a) => a.category === "Startup");
-      }
-      return newsArticles.filter((a) => a.category === "Tech");
-    }
-
-    const freq: any = {};
-
-    history.forEach((item: any) => {
-      freq[item.category] = (freq[item.category] || 0) + 1;
-    });
-
-    const top = Object.keys(freq).reduce((a, b) =>
-      freq[a] > freq[b] ? a : b
-    );
-
-    setTopCategory(top);
-
-    return newsArticles.filter((a) => a.category === top);
-  };
-
   const handleGenerateBriefing = (article: any) => {
-    trackUserActivity(article);
     navigate(`/news/${article.id}/briefing`);
   };
 
@@ -150,7 +85,6 @@ const HomePage = () => {
             AI-powered briefings, interactive insights, and personalized news.
           </p>
 
-          {/* ROLE SELECT */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             {userTypes.map((type) => {
               const Icon = type.icon;
@@ -182,18 +116,22 @@ const HomePage = () => {
       <section className="py-10">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-5">
-            {displayNews.map((article, i) => (
-              <div key={article.id} className={`glass p-4 rounded-xl`}>
-                <NewsCard article={article} index={i} />
+            {displayNews.length === 0 ? (
+              <p className="text-center col-span-3">No news available 😭</p>
+            ) : (
+              displayNews.map((article, i) => (
+                <div key={article.id} className="glass p-4 rounded-xl">
+                  <NewsCard article={article} index={i} />
 
-                <button
-                  onClick={() => handleGenerateBriefing(article)}
-                  className="mt-3 text-gold text-sm"
-                >
-                  ✨ Generate AI Briefing
-                </button>
-              </div>
-            ))}
+                  <button
+                    onClick={() => handleGenerateBriefing(article)}
+                    className="mt-3 text-gold text-sm"
+                  >
+                    ✨ Generate AI Briefing
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
