@@ -57,7 +57,7 @@ const BriefingsPage = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/ai-agent", {
+      const res = await fetch("https://newsly-backend-nb8.onrender.com/ai-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,7 +138,7 @@ const BriefingsPage = () => {
       <Navbar />
 
       <section className="relative min-h-screen pt-32">
-        <VideoBackground variant="dashboard" />
+        {/* <VideoBackground variant="dashboard" /> */}
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-10">
      
