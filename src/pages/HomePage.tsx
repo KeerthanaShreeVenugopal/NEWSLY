@@ -35,7 +35,7 @@ const HomePage = () => {
   const { lang } = useLanguage();
 
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem("token");
+  const isLoggedIn = true;
 
   useEffect(() => {
     const saved = localStorage.getItem("userType");
